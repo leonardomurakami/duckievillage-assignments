@@ -4,8 +4,8 @@
 # Se o trabalho for feito em grupo, coloque os nomes de 
 # todos os integrantes (copie e cole as linhas abaixo)
 #
-# Nome:
-# NUSP:
+# Nome: Leonardo Heidi Almeida Murakami
+# NUSP: 11260186
 #
 # ---
 #
@@ -38,8 +38,8 @@ class Agent:
         """ Initializes agent """
         self.env = environment
         # Color segmentation hyperspace
-        self.lower_hsv = np.array([5, 70, 90])
-        self.upper_hsv = np.array([40, 255, 255])
+        self.lower_hsv = np.array([5, 100, 100])
+        self.upper_hsv = np.array([30, 255, 255])
         # Acquire image for initializing activation matrices
         img = self.env.front()
         img_shape = img.shape[0], img.shape[1]
@@ -49,8 +49,8 @@ class Agent:
         self.right_motor_matrix = np.zeros(shape=img_shape, dtype="float32")
         ### TODO! Replace with your code ################################################
         # Each motor activation matrix specifies how much power is given to the respective motor after the image processing routines are applied
-        self.left_motor_matrix[:, :img_shape[1]//2] = 1   # -1 'inhibits' motor, +1 'stimulates' motor
-        self.right_motor_matrix[:, img_shape[1]//2:] = 1  # this implements the aggressive behaviour
+        self.left_motor_matrix[:, :img_shape[1]//2] = -1 # -1 'inibe' ação, +1 'estimula' e 0 ignora
+        self.right_motor_matrix[:, img_shape[1]//2:] = -1 # -1 'inibe' ação, +1 'estimula' e 0 ignora
 
     # Image processing routine - Color segmentation
     def preprocess(self, image: np.ndarray) -> np.ndarray:
@@ -77,11 +77,11 @@ class Agent:
         ### TODO! ########################################################################
         # Tweak with the constants below to get to change velocity or stabilize movements
         # Recall that pwm sets wheel torque, and is capped to be in [-1,1]
-        gain = 5.0
-        const = 0.2 # power under null activation - this ensures the robot does not halt
-        pwm_left = const + R * gain
-        pwm_right = const + L * gain
-        # print('>', L, R, pwm_left, pwm_right) # uncomment for debugging
+        gain = 3.3
+        const = 0.6 # power under null activation - this ensures the robot does not halt
+        pwm_left = const + L * gain
+        pwm_right = const + R * gain
+        print('>', L, R, pwm_left, pwm_right) # uncomment for debugging
         # Now send command
         self.env.step(pwm_left, pwm_right)
         self.env.render('human')
