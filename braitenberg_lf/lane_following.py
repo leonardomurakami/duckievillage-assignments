@@ -4,8 +4,8 @@
 # Se o trabalho for feito em grupo, coloque os nomes de 
 # todos os integrantes (copie e cole as linhas abaixo)
 #
-# Nome:
-# NUSP:
+# Nome: Leonardo Heidi Almeida Murakami
+# NUSP: 11260186
 #
 # ---
 #
@@ -37,10 +37,15 @@ class Agent:
         """ Initializes agent """
         self.env = environment
         # Color segmentation hyperspace - TODO: MODIFY THE VALUES BELOW
-        self.inner_lower = np.array([0, 0, 0])
-        self.inner_upper = np.array([179, 255, 255])
-        self.outer_lower = np.array([0, 0, 0])
-        self.outer_upper = np.array([179, 255, 255])
+        self.inner_lower = np.array([5, 70, 84])
+        self.inner_upper = np.array([30, 255, 255])
+        self.outer_lower = np.array([0, 0, 110])
+        self.outer_upper = np.array([180, 60, 255])
+        # weights
+        self.inner_L_weight = 1
+        self.inner_R_weight = 1
+        self.outer_L_weight = 1
+        self.outer_R_weight = 1
         # Acquire image for initializing activation matrices
         img = self.env.front()
         img_shape = img.shape[0], img.shape[1]
@@ -49,8 +54,10 @@ class Agent:
         self.outer_left_motor_matrix = np.zeros(shape=img_shape, dtype="float32")
         self.outer_right_motor_matrix = np.zeros(shape=img_shape, dtype="float32")
         # Connecition matrices - TODO: Replace with your code
-        self.inner_left_motor_matrix[:, :img_shape[1]//2] = 1
-        self.inner_right_motor_matrix[:, img_shape[1]//2:] = 1
+        self.inner_left_motor_matrix[:, :img_shape[1]//2] = -1
+        self.inner_right_motor_matrix[:, img_shape[1]//2:] = -1
+        self.outer_left_motor_matrix[:, :img_shape[1]//2] = -1
+        self.outer_right_motor_matrix[:, img_shape[1]//2:] = -1
 
     # Image processing routine - Color segmentation
     def preprocess(self, image: np.ndarray) -> np.ndarray:
@@ -72,10 +79,14 @@ class Agent:
         # acquire front camera image
         img = self.env.front()
         # run image processing routines
-        P, Q, M = self.preprocess(img) # returns inner, outter and combined mask matrices
+        P, Q, M = self.preprocess(img) # returns inner, outer and combined mask matrices
         # build left and right motor signals from connection matrices and masks (this is a suggestion, feel free to modify it)
-        L = float(np.sum(P * self.inner_left_motor_matrix)) + float(np.sum(Q * self.outer_left_motor_matrix))
-        R = float(np.sum(P * self.inner_right_motor_matrix)) + float(np.sum(Q * self.outer_right_motor_matrix))
+        L = 0
+        L += float(np.sum(P * self.inner_left_motor_matrix)*self.inner_L_weight)
+        L += float(np.sum(Q * self.outer_left_motor_matrix)*self.outer_L_weight)
+        R = 0
+        R += float(np.sum(P * self.inner_right_motor_matrix)*self.inner_R_weight)
+        R += float(np.sum(Q * self.outer_right_motor_matrix)*self.outer_R_weight)
         # Upper bound on the values above (very loose bound)
         limit = img.shape[0]*img.shape[1]*2
         # These are big numbers, better to rescale them to the unit interval
@@ -83,10 +94,10 @@ class Agent:
         R = rescale(R, 0, limit)
         # Tweak with the constants below to get to change velocity or to stabilize the behavior
         # Recall that the pwm signal sets the wheel torque, and is capped to be in [-1,1]
-        gain = 3.0   # increasing this will increasing responsitivity and reduce stability
-        const = 0.15 # power under null activation - this affects the base velocity
-        pwm_left = const + R * gain
-        pwm_right = const + L * gain
+        gain = 5   # increasing this will increasing responsitivity and reduce stability
+        const = .4 # power under null activation - this affects the base velocity
+        pwm_left = const + L * gain
+        pwm_right = const + R * gain
         # print('>', L, R, pwm_left, pwm_right) # uncomment for debugging
         # Now send command to motors
         self.env.step(pwm_left, pwm_right)
