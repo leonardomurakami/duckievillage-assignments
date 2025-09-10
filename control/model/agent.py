@@ -52,8 +52,8 @@ class Agent:
         self.baseline = 0.102 # [m]
 
         # Motor constants
-        self.motor_gain = 0.01 # K_m -- you should modify this value
-        self.motor_trim = 0.0  # K_t -- you should modify this value
+        self.motor_gain = 0.052594232 # K_m -- you should modify this value
+        self.motor_trim = 0.000609212  # K_t -- you should modify this value
 
         key_handler = key.KeyStateHandler()
         environment.unwrapped.window.push_handlers(key_handler)
@@ -100,8 +100,8 @@ class Agent:
             print(f"Distance: {d}")
             print(f"Angle difference: {t}")
 
-            self.motor_gain = 1.0
-            self.motor_trim = 0.0
+            self.motor_gain = 0.052594232 # K_m -- you should modify this value
+            self.motor_trim = 0.000609212  # K_t -- you should modify this value
             # Power to motors to correctly move distance d with no angular error.
             p_pwm_l, p_pwm_r = self.get_pwm_control(d, 0)
             print(f"  Estimate for K_m = {self.motor_gain}")
