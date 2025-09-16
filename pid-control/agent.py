@@ -46,9 +46,19 @@ class Agent:
         self.C = 6.0 # constant for combining output values
         key_handler = key.KeyStateHandler()
         environment.unwrapped.window.push_handlers(key_handler)
-        self.velocity = 0.0 # robot's logitudinal velocity
+        self.velocity = 0.2 # robot's logitudinal velocity (constant)
         self.rotation = 0.0 # robot's angular velocity
         self.key_handler = key_handler
+        
+        # PID controller constants
+        self.Kp = 3.0
+        self.Ki = 0.03
+        self.Kd = 0.7
+        
+        # PID state variables
+        self.previous_error = 0.0
+        self.integral_error = 0.0
+        self.last_time = 0.0
 
     def preprocess(self) -> float:
         '''Returns the metric to be used as signal for the PID controller.'''
@@ -60,29 +70,40 @@ class Agent:
         V_l = (self.motor_gain - self.motor_trim)*(v-w*self.baseline/2)/self.radius
         V_r = (self.motor_gain + self.motor_trim)*(v+w*self.baseline/2)/self.radius
         return V_l, V_r
+    
+    def pid_control(self, error: float, dt: float) -> float:
+        ''' PID controller that takes error and returns angular velocity '''
+        # Proportional term
+        P = self.Kp * error
+        
+        # Integral term
+        self.integral_error += error * dt
+        I = self.Ki * self.integral_error
+        
+        # Derivative term
+        if dt > 0:
+            derivative = (error - self.previous_error) / dt
+        else:
+            derivative = 0.0
+        D = self.Kd * derivative
+        
+        self.previous_error = error
+        
+        omega = P + I + D
+        
+        return omega
 
     def send_commands(self, dt):
         ''' Agent control loop '''
-        # Manual control for testing in order to understand the environment.
-        # You should delete this snippet after your controller is set.
-        if self.key_handler[key.W]:
-            self.velocity = 0.2
-        if self.key_handler[key.A]:
-            self.rotation += 0.5
-        if self.key_handler[key.S]:
-            self.velocity = 0.0
-        if self.key_handler[key.D]:
-            self.rotation = -0.5
-        # End of remote control snippet.
+        y = self.preprocess()
+        error = -y
+        
+        self.rotation = self.pid_control(error, dt)
 
         pwm_left, pwm_right = self.get_pwm_control(self.velocity, self.rotation)
-
-        # Target value for lane-following.
-        y = self.preprocess()
-        # print(y) # uncomment this for debugging
-
-        self.env.step(pwm_left, pwm_right) # send commands to motor
-        self.env.render() # simulate environment
+        
+        self.env.step(pwm_left, pwm_right)
+        self.env.render()
 
 def main():
     print("MAC0318 - Assignment 6")
