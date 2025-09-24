@@ -5,7 +5,7 @@
 #
 # Name: Leonardo Heidi Almeida Murakami
 # NUSP: 11260186
-# Model: 
+# Model: https://drive.google.com/file/d/1hUXKw27clhTNKbkk7H4-PwygKCw_Suoj/view?usp=sharing
 # ---
 #
 # Assignment 8 - Lane following as a regression task
